@@ -12,55 +12,7 @@ use url::Url;
 use crate::handshake::client::{Request, Response};
 use crate::protocol::WebSocketConfig;
 
-#[cfg(feature = "tls")]
-mod encryption {
-    pub use native_tls::TlsStream;
-    use native_tls::{HandshakeError as TlsHandshakeError, TlsConnector};
-    use std::net::TcpStream;
-
-    pub use crate::stream::Stream as StreamSwitcher;
-    /// TCP stream switcher (plain/TLS).
-    pub type AutoStream = StreamSwitcher<TcpStream, TlsStream<TcpStream>>;
-
-    use crate::error::Result;
-    use crate::stream::Mode;
-
-    pub fn wrap_stream(stream: TcpStream, domain: &str, mode: Mode) -> Result<AutoStream> {
-        match mode {
-            Mode::Plain => Ok(StreamSwitcher::Plain(stream)),
-            Mode::Tls => {
-                let connector = TlsConnector::builder().build()?;
-                connector
-                    .connect(domain, stream)
-                    .map_err(|e| match e {
-                        TlsHandshakeError::Failure(f) => f.into(),
-                        TlsHandshakeError::WouldBlock(_) => {
-                            panic!("Bug: TLS handshake not blocked")
-                        }
-                    })
-                    .map(StreamSwitcher::Tls)
-            }
-        }
-    }
-}
-
-#[cfg(not(feature = "tls"))]
-mod encryption {
-    use std::net::TcpStream;
-
-    use crate::error::{Error, Result};
-    use crate::stream::Mode;
-
-    /// TLS support is nod compiled in, this is just standard `TcpStream`.
-    pub type AutoStream = TcpStream;
-
-    pub fn wrap_stream(stream: TcpStream, _domain: &str, mode: Mode) -> Result<AutoStream> {
-        match mode {
-            Mode::Plain => Ok(stream),
-            Mode::Tls => Err(Error::Url("TLS support not compiled in.".into())),
-        }
-    }
-}
+mod encryption;
 
 use self::encryption::wrap_stream;
 pub use self::encryption::AutoStream;

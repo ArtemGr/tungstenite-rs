@@ -48,6 +48,9 @@ pub enum Error {
     #[cfg(feature = "tls")]
     /// TLS error
     Tls(tls::Error),
+    /// Error resolving domain name when using rustls
+    #[cfg(feature = "tls-rustls")]
+    WebpkiDNSName(webpki::InvalidDNSNameError),
     /// - When reading: buffer capacity exhausted.
     /// - When writing: your message is bigger than the configured max message size
     ///   (64MB by default).
@@ -74,6 +77,8 @@ impl fmt::Display for Error {
             Error::Io(ref err) => write!(f, "IO error: {}", err),
             #[cfg(feature = "tls")]
             Error::Tls(ref err) => write!(f, "TLS error: {}", err),
+            #[cfg(feature = "tls-rustls")]
+            Error::WebpkiDNSName(ref err) => write!(f, "DNS Name error: {}", err),
             Error::Capacity(ref msg) => write!(f, "Space limit exceeded: {}", msg),
             Error::Protocol(ref msg) => write!(f, "WebSocket protocol error: {}", msg),
             Error::SendQueueFull(_) => write!(f, "Send queue is full"),
@@ -145,6 +150,13 @@ impl From<http::Error> for Error {
 impl From<tls::Error> for Error {
     fn from(err: tls::Error) -> Self {
         Error::Tls(err)
+    }
+}
+
+#[cfg(feature = "tls-rustls")]
+impl From<webpki::InvalidDNSNameError> for Error {
+    fn from(err: webpki::InvalidDNSNameError) -> Self {
+        Error::WebpkiDNSName(err)
     }
 }
 

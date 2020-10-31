@@ -16,6 +16,7 @@ edition = "2018"
 default = ["tls"]
 tls = ["native-tls"]
 tls-vendored = ["native-tls", "native-tls/vendored"]
+tls-rustls = ["rustls", "webpki-roots", "webpki"]
 
 [dependencies]
 base64 = "0.13.0"
@@ -33,6 +34,18 @@ utf-8 = "0.7.5"
 [dependencies.native-tls]
 optional = true
 version = "0.2.3"
+
+[dependencies.rustls]
+optional = true
+version = "0.18.1"
+
+[dependencies.webpki-roots]
+optional = true
+version = "0.20.0"
+
+[dependencies.webpki]
+optional = true
+version = "0.21.3"
 
 [dev-dependencies]
 env_logger = "0.8.1"
